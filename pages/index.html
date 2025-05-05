@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The Modern Wardrobe Co. - Premium clothing at wholesale prices">
+    <title>The Modern Wardrobe Co. | Wholesale Fashion</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/ProductList.css">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Palatino+Linotype:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- JavaScript -->
+    <script defer src="assets/js/scripts.js"></script>
+    <script defer src="assets/js/ProductList.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <!-- 🌟 Promotional Banner -->
+    <section class="top-banner" aria-label="Promotional banner">
+        <img src="assets/images/banner.jpg" alt="Stylish clothing collection" width="1600" height="600" loading="lazy">
+    </section>
+
+    <!-- 🌟 Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo-container">
+                <img src="assets/images/logo.png" alt="The Modern Wardrobe Co. Logo" class="logo" width="120" height="60">
+                <h1>The Modern Wardrobe Co.</h1>
+            </div>
+            <button class="menu-toggle" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 🌟 Navigation Bar -->
+    <nav aria-label="Main navigation">
+        <div class="container">
+            <ul class="nav-menu" id="nav-links">
+                <li><a href="bulk.html">Bulk Deals</a></li>
+                <li><a href="retail.html">Retail Shop</a></li>
+                <li><a href="sell.html">Sell with Us</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 🌟 Main Content -->
+    <main id="main-content">
+        <!-- 📌 Featured Categories -->
+        <section class="featured-categories" aria-labelledby="categories-heading">
+            <div class="container">
+                <h2 id="categories-heading">Discover Our Latest Collections</h2>
+                <div class="category-grid">
+                    <article class="category-card">
+                        <img src="assets/images/mens.jpg" alt="Men's Fashion" width="400" height="300" loading="lazy">
+                        <h3>Men's Fashion</h3>
+                        <a href="#mens-products" class="category-link">Shop Now</a>
+                    </article>
+                    <article class="category-card">
+                        <img src="assets/images/womens.jpg" alt="Women's Fashion" width="400" height="300" loading="lazy">
+                        <h3>Women's Fashion</h3>
+                        <a href="#womens-products" class="category-link">Shop Now</a>
+                    </article>
+                    <article class="category-card">
+                        <img src="assets/images/childrens.jpg" alt="Kids' Fashion" width="400" height="300" loading="lazy">
+                        <h3>Kids' Fashion</h3>
+                        <a href="#kids-products" class="category-link">Shop Now</a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- 📌 Product Listings -->
+        <section class="products-section" aria-labelledby="products-heading">
+            <div class="container">
+                <h2 id="products-heading">Browse Our Products</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-category="">All Products</button>
+                    <button class="filter-btn" data-category="mens" id="mens-products">Men's</button>
+                    <button class="filter-btn" data-category="womens" id="womens-products">Women's</button>
+                    <button class="filter-btn" data-category="kids" id="kids-products">Kids</button>
+                </div>
+                <div class="products-grid" id="product-grid">
+                    <div class="loading-indicator">⌛ Loading products...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 📌 Order Form -->
+        <section class="order-section" aria-labelledby="order-heading">
+            <div class="container">
+                <h2 id="order-heading">Place an Order</h2>
+                <form id="orderForm" class="order-form">
+                    <div class="form-group">
+                        <label for="product">Product Name</label>
+                        <input type="text" id="product" name="product" readonly required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" id="quantity" name="quantity" min="1" required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="total">Total Price</label>
+                        <input type="text" id="total" name="total" readonly required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="buyerEmail">Buyer Email</label>
+                        <input type="email" id="buyerEmail" name="buyerEmail" required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="sellerEmail">Seller Email</label>
+                        <input type="email" id="sellerEmail" name="sellerEmail" required aria-required="true">
+                    </div>
+                    <button type="submit" class="submit-btn">Submit Order</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- 📌 Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="current-year"></span> The Modern Wardrobe Co. All rights reserved.</p>
+            <ul class="footer-links">
+                <li><a href="privacy.html">Privacy Policy</a></li>
+                <li><a href="terms.html">Terms of Service</a></li> 
+                <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- 📌 Dynamic Year in Footer -->
+    <script>
+        document.getElementById("current-year").textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

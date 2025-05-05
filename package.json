@@ -1,0 +1,15 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Modern Wardrobe Frontend",
+  "scripts": {
+    "start": "live-server --open=retail.html"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.0"
+  },
+  "dependencies": {
+    "open": "^10.1.1",
+    "uuid": "^11.1.0"
+  }
+}

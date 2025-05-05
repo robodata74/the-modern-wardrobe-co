@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart - The Modern Wardrobe Co.</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <link rel="icon" href="/assets/images/favicon.ico" />
+
+  <!-- jQuery (required by Lightbox2) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+  <!-- PDF Support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <!-- Lightbox2 (for image zoom) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" crossorigin="anonymous" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js" crossorigin="anonymous"></script>
+  
+  <style>
+    /* Global layout & typography */
+    .cart-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+      font-family: sans-serif;
+    }
+    .cart-title {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    .cart-message {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      color: var(--primary-dark);
+    }
+    /* Cart Item Styles */
+    .cart-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding: 15px 0;
+      margin-bottom: 15px;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item a {
+      flex: 0 0 100px;
+      margin-right: 20px;
+    }
+    .cart-item img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .cart-item-details {
+      flex: 1;
+      min-width: 250px;
+    }
+    .cart-item-details h3 {
+      margin: 0 0 5px;
+      font-size: 1.2rem;
+    }
+    .cart-item-details p {
+      margin: 3px 0;
+      font-size: 0.95rem;
+    }
+    .remove-btn {
+      background-color: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .remove-btn:hover {
+      background-color: #e63946;
+    }
+    .cart-actions {
+      text-align: center;
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    .checkout-btn,
+    .print-btn,
+    .contact-button {
+      background-color: #FFD700; /* Mustard */
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+      margin: 5px;
+    }
+    .checkout-btn:hover,
+    .print-btn:hover,
+    .contact-button:hover {
+      background-color: #FFC000;
+    }
+    .empty-cart {
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 40px 0;
+      color: var(--text);
+    }
+    /* WhatsApp Button Styles */
+    .whatsapp-button {
+      background-color: white;
+      border: 2px solid green;
+      font-size: 14px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .whatsapp-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+    }
+  </style>
+  
+  <script>
+    /******************************************************
+     * Configuration & API Credentials (Insert Later)
+     ******************************************************/
+    // Replace the placeholder values with your actual credentials from your .env file.
+    window.config = {
+      paypalClientId: "YOUR_PAYPAL_CLIENT_ID",    // Insert your PayPal client ID.
+      whatsappNumber: "YOUR_TWILIO_WHATSAPP_NUMBER",  // Insert your WhatsApp number.
+      emailAddress: "YOUR_EMAIL_ADDRESS"           // Insert your contact email address.
+    };
+
+    /******************************************************
+     * Dynamically Load the PayPal SDK
+     ******************************************************/
+    (function loadPayPalSdk() {
+      var script = document.createElement("script");
+      script.src = "https://www.paypal.com/sdk/js?client-id=" + window.config.paypalClientId;
+      script.async = true;
+      document.head.appendChild(script);
+    })();
+
+    /******************************************************
+     * Helper Functions
+     ******************************************************/
+    // Build a complete image URL.
+    function getImageUrl(imagePath) {
+      if (!imagePath) return "/assets/images/placeholder.jpg";
+      if (imagePath.startsWith("http")) return imagePath;
+      if (imagePath.startsWith("/uploads/")) return "http://localhost:3001" + imagePath;
+      return "http://localhost:3001/uploads/" + imagePath;
+    }
+
+    // Retrieve the cart item from localStorage.
+    // First, try to get the stored "cartItem". If not found, check the query parameter "ProductID".
+    // If still not found, default to the only available bulk product using ProductID="KF0401".
+    function getCartItem() {
+      let itemStr = localStorage.getItem("cartItem");
+      if (itemStr) {
+        try {
+          return JSON.parse(itemStr);
+        } catch (e) {
+          return { ProductID: itemStr, quantity: 1 };
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryID = urlParams.get("ProductID");
+      if (queryID) {
+        const newItem = { ProductID: queryID, quantity: 1 };
+        localStorage.setItem("cartItem", JSON.stringify(newItem));
+        return newItem;
+      }
+      // Default to the only available bulk product
+      const defaultID = "KF0401";
+      const defaultItem = { ProductID: defaultID, quantity: 1 };
+      localStorage.setItem("cartItem", JSON.stringify(defaultItem));
+      return defaultItem;
+    }
+
+    /******************************************************
+     * Load Full Product Details from bulk_products.json
+     ******************************************************/
+    async function loadProducts() {
+      const response = await fetch("http://localhost:3001/uploads/bulk_products.json");
+      const data = await response.json();
+      let products = [];
+      if (Array.isArray(data) && data.length > 0 && data[0].products) {
+        products = data[0].products;
+      } else if (Array.isArray(data)) {
+        products = data;
+      } else {
+        products = [data];
+      }
+      return products;
+    }
+
+    /******************************************************
+     * Load Cart Item and Display Product Details
+     ******************************************************/
+    function loadCartItem() {
+      const cartItem = getCartItem();
+      const container = document.getElementById("cart-items");
+      if (!cartItem) {
+        container.innerHTML = "<p class='empty-cart'>Your cart is empty.</p>";
+        return;
+      }
+      // If a valid ProductID is available, get full product details.
+      if (cartItem.ProductID) {
+        loadProducts().then(products => {
+          const product = products.find(p => p.ProductID === cartItem.ProductID);
+          // Use product details if found; otherwise, fall back to stored data.
+          const productName = (product && product.ProductName) || cartItem.productName || "Unknown Product";
+          const price = product ? product["PricePlus10%"] : (cartItem.price || "0");
+          const quantity = cartItem.quantity ? parseInt(cartItem.quantity) : 1;
+          const imageURL = product ? getImageUrl(product.ImageFile) : getImageUrl(cartItem.imageFile);
+          container.innerHTML = `
+            <div class="cart-item">
+              <a href="${imageURL}" data-lightbox="product-gallery">
+                <img src="${imageURL}" alt="${productName}" />
+              </a>
+              <div class="cart-item-details">
+                <h3>${productName}</h3>
+                <p>ProductID: ${cartItem.ProductID}</p>
+                <p>Unit Price: $${price}</p>
+                <p>Quantity: ${quantity}</p>
+                <p>Description: ${product ? (product.ProductDescription || "No description available") : "No description available"}</p>
+              </div>
+            </div>
+          `;
+          const unitPrice = parseFloat(price.replace(/[^0-9.]/g, "")) || 0;
+          const total = unitPrice * quantity;
+          container.insertAdjacentHTML("beforeend", `<p id="total-price">Total Price: $${total.toFixed(2)}</p>`);
+        });
+      } else {
+        // Fallback: Display stored values directly.
+        const productName = cartItem.productName || "Unknown Product";
+        const price = cartItem.price || "0";
+        const quantity = cartItem.quantity || 1;
+        const imageURL = getImageUrl(cartItem.imageFile);
+        container.innerHTML = `
+          <div class="cart-item">
+            <a href="${imageURL}" data-lightbox="product-gallery">
+              <img src="${imageURL}" alt="${productName}" />
+            </a>
+            <div class="cart-item-details">
+              <h3>${productName}</h3>
+              <p>Unit Price: $${price}</p>
+              <p>Quantity: ${quantity}</p>
+              <p>Description: No description available</p>
+            </div>
+          </div>
+        `;
+        const unitPrice = parseFloat(price.replace(/[^0-9.]/g, "")) || 0;
+        const total = unitPrice * quantity;
+        container.insertAdjacentHTML("beforeend", `<p id="total-price">Total Price: $${total.toFixed(2)}</p>`);
+      }
+    }
+
+    /******************************************************
+     * Remove / Clear Cart Item
+     ******************************************************/
+    function removeCartItem() {
+      localStorage.removeItem("cartItem");
+      document.getElementById("cart-items").innerHTML = "<p class='empty-cart'>Your cart is empty.</p>";
+    }
+
+    /******************************************************
+     * Action Buttons: Proceed, Invoice, and PayPal
+     ******************************************************/
+    function proceedToCheckout() {
+      window.location.href = "/checkout.html";
+    }
+    
+    function generateInvoice() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let yPosition = 20;
+      doc.setFontSize(16);
+      doc.text("Invoice - The Modern Wardrobe Co.", 10, yPosition);
+      yPosition += 10;
+      doc.setFontSize(12);
+      const cartItem = getCartItem();
+      if (cartItem) {
+        loadProducts().then(products => {
+          const product = products.find(p => p.ProductID === cartItem.ProductID);
+          const productName = product ? product.ProductName : (cartItem.productName || "Unknown Product");
+          const price = product ? product["PricePlus10%"] : (cartItem.price || "0");
+          const quantity = cartItem.quantity ? parseInt(cartItem.quantity) : 1;
+          const unitPrice = parseFloat(price.replace(/[^0-9.]/g, "")) || 0;
+          doc.text(`Product: ${productName}`, 10, yPosition);
+          yPosition += 6;
+          doc.text(`ProductID: ${cartItem.ProductID}`, 10, yPosition);
+          yPosition += 6;
+          doc.text(`Unit Price: $${price}`, 10, yPosition);
+          yPosition += 6;
+          doc.text(`Quantity: ${quantity}`, 10, yPosition);
+          yPosition += 8;
+          const total = (unitPrice * quantity).toFixed(2);
+          doc.text(`Total: $${total}`, 10, yPosition);
+          doc.save("receipt.pdf");
+        });
+      } else {
+        doc.text("No item in cart.", 10, yPosition);
+        doc.save("receipt.pdf");
+      }
+    }
+
+    /******************************************************
+     * Set Contact Links for Email & WhatsApp
+     ******************************************************/
+    function setContactLinks() {
+      const emailLink = document.getElementById("emailLink");
+      emailLink.href = `mailto:${window.config.emailAddress}?subject=Order%20Inquiry`;
+
+      const whatsappLink = document.getElementById("whatsappLink");
+      whatsappLink.href = `https://api.whatsapp.com/send?phone=${encodeURIComponent(window.config.whatsappNumber)}&text=Hello%20Modern%20Wardrobe%20Co.%20Team%20I%20have%20an%20order%20inquiry`;
+    }
+
+    /******************************************************
+     * Render PayPal Buttons
+     ******************************************************/
+    function renderPayPalButtons() {
+      if (window.paypal && window.paypal.Buttons) {
+        window.paypal.Buttons().render("#paypal-button-container");
+      } else {
+        setTimeout(renderPayPalButtons, 2000);
+      }
+    }
+
+    /******************************************************
+     * Initialize on DOM Content Loaded
+     ******************************************************/
+    document.addEventListener("DOMContentLoaded", function() {
+      loadCartItem();
+      setContactLinks();
+      renderPayPalButtons();
+    });
+  </script>
+</head>
+<body>
+  <header class="branding-header">
+    <div class="container">
+      <img src="/assets/images/logo.png" alt="The Modern Wardrobe Co." class="logo" />
+      <h1>Your Bulk Order Cart</h1>
+    </div>
+  </header>
+  
+  <nav>
+    <a href="/index.html" class="nav-link">Home</a>
+    <a href="/bulk.html" class="nav-link">Bulk Orders</a>
+    <a href="/sell.html" class="nav-link">Sell</a>
+    <a href="/contact.html" class="nav-link">Contact</a>
+  </nav>
+  
+  <main class="cart-container">
+    <h2 class="cart-title">Review Your Bulk Order</h2>
+    <p class="cart-message">
+      📢 <strong>Ensure you have the right items before proceeding.</strong>
+      Contact us if you need assistance!
+    </p>
+    
+    <div class="cart-items" id="cart-items">
+      <!-- Checkout item will load here -->
+    </div>
+    
+    <div class="cart-actions">
+      <button class="checkout-btn" onclick="proceedToCheckout()">🛒 Proceed to Checkout</button>
+      <button class="print-btn" onclick="generateInvoice()">🖨️ Print Receipt</button>
+      <a href="mailto:TheModernWardrobeCo@outlook.com?subject=Cart%20Inquiry" class="contact-button email-button">
+        📩 Email Us for Help
+      </a>
+      <a href="https://api.whatsapp.com/send?phone=+254708557555&text=Hello%20Modern%20Wardrobe%20Co.%20Team%2C%20I%20have%20a%20cart%20inquiry" class="contact-button whatsapp-button">
+        <img src="/assets/images/whatsapp-icon.png" alt="WhatsApp" class="whatsapp-icon">
+        Message Us on WhatsApp
+      </a>
+    </div>
+    
+    <!-- Optional: A remove button to clear the cart item -->
+    <div class="cart-actions" style="margin-top:20px;">
+      <button class="remove-btn" onclick="removeCartItem()">❌ Remove Item</button>
+    </div>
+  </main>
+  
+  <footer class="branding-footer">
+    <p>&copy; 2025 The Modern Wardrobe Co. - All rights reserved.</p>
+  </footer>
+</body>
+</html>

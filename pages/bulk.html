@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>The Modern Wardrobe Co. - Bulk Orders</title>
+    <link rel="icon" href="./assets/images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="./assets/css/ProductList.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav aria-label="Main navigation">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="bulk.html">Bulk Orders</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Promotional Banner Section -->
+    <section class="banner" aria-labelledby="bulk-order-heading">
+        <img src="./assets/images/banner.jpg" alt="Fashion Banner" width="1600" height="600" loading="lazy">
+        <h1 id="bulk-order-heading">Bulk Orders - The Modern Wardrobe Co.</h1>
+        <p>Order in bulk and enjoy amazing discounts. Choose from our stylish collections.</p>
+    </section>
+
+    <!-- Product List Section -->
+    <section id="product-list" aria-labelledby="product-list-heading">
+        <h2 id="product-list-heading">Available Products</h2>
+        <div id="product-cards-container">
+            <!-- Product cards will be dynamically inserted by JavaScript -->
+            <div class="loading-message">⌛ Loading product details...</div>
+        </div>
+    </section>
+
+    <!-- Bulk Order Form -->
+    <section id="bulk-order-form" aria-labelledby="order-form-heading">
+        <h2 id="order-form-heading">Place Bulk Order</h2>
+        <form id="bulk-order-form" method="POST">
+            <label for="product-name">Product Name:</label>
+            <input type="text" id="product-name" name="product-name" required aria-required="true">
+            
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" required min="1" aria-required="true">
+            
+            <label for="contact-email">Contact Email:</label>
+            <input type="email" id="contact-email" name="contact-email" required aria-required="true">
+
+            <button type="submit">Submit Order</button>
+        </form>
+    </section>
+
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; <span id="current-year"></span> The Modern Wardrobe Co. All rights reserved.</p>
+    </footer>
+
+    <!-- Dynamic Year in Footer -->
+    <script>
+        document.getElementById("current-year").textContent = new Date().getFullYear();
+    </script>
+
+    <!-- JS Files -->
+    <script src="./assets/js/scripts.js" defer></script>
+    <script src="./assets/js/ProductList.js" defer></script>
+
+    <!-- Product Loading Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async function() {
+            try {
+                // API call to fetch products (adjust to your backend endpoint)
+                const response = await fetch('http://localhost:3001/api/products/bulk');
+                const data = await response.json();
+
+                if (data.products && data.products.length > 0) {
+                    const productsContainer = document.getElementById('product-cards-container');
+                    productsContainer.innerHTML = ''; // Clear the loading message
+
+                    // Loop through the products and create HTML for each product
+                    data.products.forEach(product => {
+                        const productCard = document.createElement('div');
+                        productCard.classList.add('product-card');
+                        productCard.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                            <h3 class="product-name">${product.name}</h3>
+                            <p class="product-price">$${product.price}</p>
+                        `;
+                        productsContainer.appendChild(productCard);
+                    });
+                } else {
+                    // Handle case where no products are available
+                    document.getElementById('product-cards-container').innerHTML = "<p>No products available.</p>";
+                }
+            } catch (error) {
+                console.error('Error fetching product details:', error);
+                document.getElementById('product-cards-container').innerHTML = "<p>Error loading products. Please try again later.</p>";
+            }
+        });
+
+        // Handling bulk order form submission
+        const form = document.getElementById('bulk-order-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const productName = document.getElementById('product-name').value;
+            const quantity = document.getElementById('quantity').value;
+            const contactEmail = document.getElementById('contact-email').value;
+
+            const orderData = { productName, quantity, contactEmail };
+
+            try {
+                // API call to submit the order (adjust to your backend endpoint)
+                const response = await fetch('http://localhost:3001/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Order submitted successfully!');
+                    form.reset();
+                } else {
+                    alert('Error submitting order: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error submitting order:', error);
+                alert('An error occurred while submitting your order.');
+            }
+        });
+    </script>
+</body>
+</html>
